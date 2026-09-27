@@ -1,34 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# X17 Registry Interface
 
-## Getting Started
+Frontend repository for the unified X17 experiment registry. The application is deliberately blank while the interface and backend contracts are designed. It contains no DAQ or trigger hardware controls.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
+- Next.js App Router, React, and strict TypeScript
+- pnpm with a committed lockfile
+- Tailwind CSS through PostCSS
+- Biome for formatting, import organization, and lint checks
+
+Use Node.js 22 and the pnpm version declared in `package.json`.
+
+## Commands
+
+```sh
+pnpm install --frozen-lockfile
 pnpm dev
-# or
-bun dev
+pnpm check
+pnpm typecheck
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`pnpm dev` serves a blank page at `http://localhost:3000`. `pnpm check:fix` applies Biome's safe fixes. `pnpm format` formats files.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The production build uses Next.js's supported webpack option. In the current workspace, Turbopack's CSS worker cannot bind its internal port; the webpack build completes successfully.
 
-## Learn More
+## Code boundaries
 
-To learn more about Next.js, take a look at the following resources:
+`src/app/` is reserved for route entry points, layouts, and global styling. As the interface grows, keep domain-specific views and state in `src/features/<domain>/`, reusable presentation components in `src/components/`, and backend transport code in `src/lib/api/`. Place shared data types beside the feature that owns them; move them to a shared location only when several features need them.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The central backend will be the interface's data and lifecycle API. The browser should not connect directly to ZeroMQ, TriggerApp, or the beam logbook. Their separate middleware modules will feed the backend. Define request and response types from the backend contract once it exists, rather than inventing API shapes in this repository.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The root route intentionally renders nothing. No UI, API client, environment variables, or authentication flow has been added yet.
