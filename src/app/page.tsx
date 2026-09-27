@@ -1,3 +1,7 @@
 export default function Home() {
-  return null;
+  return (
+    <div className="font-bold">
+      Hello, <span className="text-sky-500 underline">world</span>!
+    </div>
+  );
 }
