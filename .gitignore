@@ -3,7 +3,6 @@
 AGENTS.md
 CLAUDE.md
 
-tsconfig.tsbuildinfo
 # dependencies
 /node_modules
 /.pnp
