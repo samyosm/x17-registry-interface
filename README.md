@@ -21,4 +21,4 @@ pnpm typecheck
 pnpm build
 ```
 
-`pnpm dev` serves the page at `http://localhost:3000`. `pnpm check:fix` applies Biome's safe fixes. `pnpm format` formats files.
+`pnpm dev` serves the page at `http://localhost:3000`. `pnpm typecheck` generates Next.js route types before running TypeScript, so it also works from a clean checkout. `pnpm check:fix` applies Biome's safe fixes. `pnpm format` formats files.
