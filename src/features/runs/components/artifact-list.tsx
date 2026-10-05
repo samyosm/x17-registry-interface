@@ -10,7 +10,7 @@ function ArtifactAction({ artifact }: { artifact: Artifact }) {
         className="font-medium text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         aria-label={`Download ${artifact.name}`}
       >
-        Download JSON <span aria-hidden="true">↗</span>
+        Download {artifact.format} <span aria-hidden="true">↗</span>
       </a>
     );
   }

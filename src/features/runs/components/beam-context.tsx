@@ -1,3 +1,4 @@
+import { formatUtc } from "../format";
 import type { BeamContext as BeamContextData } from "../model";
 import { StatusLabel } from "./status-label";
 
@@ -16,7 +17,7 @@ export function BeamContext({ beam }: { beam: BeamContextData }) {
       <p className="mt-1 text-xs text-muted">{beam.source}</p>
       <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
         <div>
-          <dt className="text-xs text-muted">Recorded status</dt>
+          <dt className="text-xs text-muted">Beam during run</dt>
           <dd className="mt-1.5">
             <StatusLabel type="beam" value={beam.status} />
           </dd>
@@ -34,6 +35,21 @@ export function BeamContext({ beam }: { beam: BeamContextData }) {
         {beam.note ??
           "Beam entries describe operator-recorded conditions. Their timestamps are not instrument measurements."}
       </p>
+      {beam.events && beam.events.length > 0 && (
+        <div className="mt-6">
+          <h4 className="text-xs font-semibold text-muted">
+            Logged changes · UTC
+          </h4>
+          <ul className="mt-2 space-y-1 text-sm text-ink">
+            {beam.events.map((event) => (
+              <li key={`${event.at}-${event.publicId ?? event.status}`}>
+                {formatUtc(event.at)} · Beam {event.status.toUpperCase()}
+                {event.publicId ? ` · ${event.publicId}` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }

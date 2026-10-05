@@ -28,6 +28,11 @@ export interface BeamContext {
   current: string | null;
   charge: string | null;
   note: string | null;
+  events?: {
+    at: string;
+    status: "on" | "off";
+    publicId: string | null;
+  }[];
 }
 
 export interface RunConfiguration {
