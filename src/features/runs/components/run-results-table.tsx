@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import type { RunSearchResult } from "../data/run-repository";
-import { formatUtc } from "../format";
+import { formatBytes, formatUtc } from "../format";
 import type { RunSearchItem } from "../model";
 import { type RunQuery, runHref, runsHref } from "../query";
 import { StatusLabel } from "./status-label";
 
-function fileSummary(run: RunSearchItem): string {
-  if (run.artifactCount === 0) return "No files listed";
-  return `${run.artifactCount} ${run.artifactCount === 1 ? "file" : "files"} listed`;
+function dataSummary(run: RunSearchItem): string {
+  if (run.pointCount === 0) return "No detector values";
+  if (run.pointCount === null) return "Count unavailable";
+  return `${run.pointCount.toLocaleString()} stored values`;
 }
 
 export function RunResultsTable({
@@ -35,7 +36,50 @@ export function RunResultsTable({
             {result.total} {result.total === 1 ? "result" : "results"}
           </span>
         </div>
-        <span className="text-xs text-muted">All times UTC</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted">All times UTC</span>
+          <form
+            action="/"
+            method="get"
+            className="flex items-center gap-2 text-xs"
+          >
+            {query.q && <input type="hidden" name="q" value={query.q} />}
+            {query.from && (
+              <input type="hidden" name="from" value={query.from} />
+            )}
+            {query.to && <input type="hidden" name="to" value={query.to} />}
+            {query.beam !== "all" && (
+              <input type="hidden" name="beam" value={query.beam} />
+            )}
+            {query.hasData !== "all" && (
+              <input type="hidden" name="hasData" value={query.hasData} />
+            )}
+            {query.sort !== "newest" && (
+              <input type="hidden" name="sort" value={query.sort} />
+            )}
+            <label htmlFor="page-size" className="text-muted">
+              Rows
+            </label>
+            <select
+              id="page-size"
+              name="pageSize"
+              defaultValue={query.pageSize}
+              className="border-b border-line bg-surface px-2 py-1 text-ink"
+            >
+              {[5, 10, 25, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="font-medium text-accent hover:underline"
+            >
+              Show
+            </button>
+          </form>
+        </div>
       </div>
 
       {result.total === 0 ? (
@@ -53,7 +97,7 @@ export function RunResultsTable({
         />
       ) : (
         <div className="overflow-x-auto border-t border-line">
-          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[860px] border-collapse text-left text-sm">
             <thead className="bg-surface text-xs font-semibold text-muted">
               <tr>
                 <th scope="col" className="w-[16%] px-4 py-3 font-semibold">
@@ -80,7 +124,7 @@ export function RunResultsTable({
                   Beam
                 </th>
                 <th scope="col" className="w-[14%] px-4 py-3 font-semibold">
-                  Data
+                  Detector data
                 </th>
               </tr>
             </thead>
@@ -93,6 +137,7 @@ export function RunResultsTable({
                   <td className="px-4 py-4 align-top">
                     <Link
                       href={runHref(run.id, query)}
+                      prefetch={false}
                       className="font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                     >
                       {run.runNumber}
@@ -104,6 +149,7 @@ export function RunResultsTable({
                   <td className="px-4 py-4 align-top">
                     <Link
                       href={runHref(run.id, query)}
+                      prefetch={false}
                       className="font-medium text-ink underline-offset-4 hover:text-accent hover:underline"
                     >
                       {run.title}
@@ -119,7 +165,14 @@ export function RunResultsTable({
                     <StatusLabel type="beam" value={run.beamStatus} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 align-top text-muted">
-                    {fileSummary(run)}
+                    <span className="text-ink">{dataSummary(run)}</span>
+                    {run.estimatedJsonBytes !== null &&
+                      run.pointCount !== null &&
+                      run.pointCount > 0 && (
+                        <span className="block text-xs">
+                          ≈ {formatBytes(run.estimatedJsonBytes)} JSON
+                        </span>
+                      )}
                   </td>
                 </tr>
               ))}

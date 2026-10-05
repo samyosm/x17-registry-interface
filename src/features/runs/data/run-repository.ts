@@ -39,10 +39,13 @@ export const runRepository: RunRepository = {
     const params = new URLSearchParams({
       sort: query.sort,
       page: String(query.page),
+      pageSize: String(query.pageSize),
     });
     if (query.q) params.set("q", query.q);
     if (query.from) params.set("from", query.from);
     if (query.to) params.set("to", query.to);
+    if (query.beam !== "all") params.set("beam", query.beam);
+    if (query.hasData !== "all") params.set("hasData", query.hasData);
     const response = await registryGet(`runs?${params.toString()}`);
     if (!response.ok)
       throw new Error(`Registry search failed: ${response.status}`);

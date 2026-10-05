@@ -1,4 +1,4 @@
-import { formatUtc } from "../format";
+import { formatBytes, formatUtc } from "../format";
 import type { Run } from "../model";
 import { StatusLabel } from "./status-label";
 
@@ -28,7 +28,7 @@ export function RunSummary({ run }: { run: Run }) {
           <StatusLabel type="completeness" value={run.completeness} />
         </div>
       </div>
-      <dl className="mt-8 grid gap-5 sm:grid-cols-3">
+      <dl className="mt-8 grid gap-5 sm:grid-cols-4">
         <div>
           <dt className="text-xs font-semibold text-muted">Started</dt>
           <dd className="mt-1 text-sm font-medium tabular-nums text-ink">
@@ -44,6 +44,21 @@ export function RunSummary({ run }: { run: Run }) {
         <div>
           <dt className="text-xs font-semibold text-muted">Title source</dt>
           <dd className="mt-1 text-sm text-ink">{run.titleSource}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold text-muted">Detector values</dt>
+          <dd className="mt-1 text-sm text-ink">
+            {run.pointCount === null
+              ? "Unknown"
+              : run.pointCount.toLocaleString()}
+          </dd>
+          {run.estimatedJsonBytes !== null &&
+            run.pointCount !== null &&
+            run.pointCount > 0 && (
+              <span className="text-xs text-muted">
+                ≈ {formatBytes(run.estimatedJsonBytes)} JSON
+              </span>
+            )}
         </div>
       </dl>
       {run.notes ? (

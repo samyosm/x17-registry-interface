@@ -20,12 +20,18 @@ export function SiteHeader() {
           </span>
           <span className="text-sm font-semibold tracking-tight">Registry</span>
         </Link>
-        <nav aria-label="Main navigation">
+        <nav aria-label="Main navigation" className="flex items-center gap-6">
           <Link
             href="/"
-            className="border-b-2 border-ink py-5 text-sm font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="py-5 text-sm font-medium text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             Runs
+          </Link>
+          <Link
+            href="/diagnostics"
+            className="py-5 text-sm font-medium text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Diagnostics
           </Link>
         </nav>
       </div>

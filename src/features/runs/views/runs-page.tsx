@@ -24,7 +24,7 @@ export function RunsPage({
           data attached to each run.
         </p>
       </div>
-      <RunSearch query={query} />
+      <RunSearch key={query.q} query={query} />
       <RunResultsTable result={result} query={query} />
     </div>
   );

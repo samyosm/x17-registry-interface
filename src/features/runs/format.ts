@@ -16,6 +16,7 @@ export function formatUtc(value: string | null): string {
 
 export function formatBytes(value: number | null): string {
   if (value === null) return "Size unknown";
+  if (value < 1_000) return `${value} B`;
   if (value < 1_000_000) return `${Math.round(value / 1_000)} KB`;
   return `${(value / 1_000_000).toFixed(1)} MB`;
 }
