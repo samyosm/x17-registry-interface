@@ -14,6 +14,21 @@ export function formatUtc(value: string | null): string {
   return value ? `${utcDateTime.format(new Date(value))} UTC` : "Not recorded";
 }
 
+export function formatDuration(start: string, end: string | null): string {
+  if (!end) return "Ongoing";
+  const seconds = Math.max(
+    0,
+    Math.floor((Date.parse(end) - Date.parse(start)) / 1000),
+  );
+  const days = Math.floor(seconds / 86_400);
+  const hours = Math.floor((seconds % 86_400) / 3_600);
+  const minutes = Math.floor((seconds % 3_600) / 60);
+  if (days) return `${days} d ${hours} h`;
+  if (hours) return `${hours} h ${minutes} min`;
+  if (minutes) return `${minutes} min`;
+  return `${seconds} s`;
+}
+
 export function formatBytes(value: number | null): string {
   if (value === null) return "Size unknown";
   if (value < 1_000) return `${value} B`;

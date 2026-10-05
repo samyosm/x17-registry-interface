@@ -17,10 +17,9 @@ export interface RunSearchItem {
   experimentId: string;
   title: string;
   startedAt: string;
+  endedAt: string | null;
   beamStatus: BeamStatus;
   artifactCount: number;
-  pointCount: number | null;
-  estimatedJsonBytes: number | null;
 }
 
 export interface BeamContext {
@@ -56,8 +55,6 @@ export interface Run {
   endedAt: string | null;
   completeness: RunCompleteness;
   detectorSources: string[];
-  pointCount: number | null;
-  estimatedJsonBytes: number | null;
   beam: BeamContext;
   configuration: RunConfiguration | null;
   notes: string | null;
