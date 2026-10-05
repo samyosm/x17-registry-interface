@@ -49,10 +49,13 @@ export function RunDetailPage({ run, query }: { run: Run; query: RunQuery }) {
         <h2 id="sources-title" className="text-xl font-semibold text-ink">
           Detector sources
         </h2>
+        <p className="mt-2 text-sm text-muted">
+          VF48 points are matched to this run by their InfluxDB timestamps.
+        </p>
         <p className="mt-3 text-sm text-muted">
           {run.detectorSources.length
             ? run.detectorSources.join(" · ")
-            : "Not recorded"}
+            : "No matching detector points in the registry yet"}
         </p>
       </section>
     </div>

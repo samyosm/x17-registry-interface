@@ -10,7 +10,7 @@ function ArtifactAction({ artifact }: { artifact: Artifact }) {
         className="font-medium text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         aria-label={`Download ${artifact.name}`}
       >
-        Download <span aria-hidden="true">↗</span>
+        Download JSON <span aria-hidden="true">↗</span>
       </a>
     );
   }
@@ -27,17 +27,17 @@ export function ArtifactList({ artifacts }: { artifacts: Artifact[] }) {
     <section aria-labelledby="files-title" className="py-10">
       <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="files-title" className="text-xl font-semibold text-ink">
-          Data files
+          Detector data
         </h2>
         <span className="text-sm text-muted">
           {artifacts.length}{" "}
-          {artifacts.length === 1 ? "file listed" : "files listed"}
+          {artifacts.length === 1 ? "export available" : "exports available"}
         </span>
       </div>
       {artifacts.length === 0 ? (
         <DataState
-          title="No files listed yet"
-          description="Data files may still be registered, or this run may have no available artifacts."
+          title="No detector data available yet"
+          description="InfluxDB points may still be syncing, or none were recorded during this run."
         />
       ) : (
         <ul className="border-t border-line">
