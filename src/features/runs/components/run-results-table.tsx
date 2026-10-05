@@ -1,14 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import type { RunSearchResult } from "../data/run-repository";
+import { useRunStats } from "../data/use-run-stats";
 import { formatBytes, formatUtc } from "../format";
 import type { RunSearchItem } from "../model";
 import { type RunQuery, runHref, runsHref } from "../query";
 import { StatusLabel } from "./status-label";
 
-function dataSummary(run: RunSearchItem): string {
+function dataSummary(run: RunSearchItem, pending: boolean): string {
+  if (run.artifactCount === 0) return "No detector values";
   if (run.pointCount === 0) return "No detector values";
-  if (run.pointCount === null) return "Count unavailable";
+  if (run.pointCount === null)
+    return pending ? "Counting…" : "Count unavailable";
   return `${run.pointCount.toLocaleString()} stored values`;
 }
 
@@ -19,6 +24,10 @@ export function RunResultsTable({
   result: RunSearchResult;
   query: RunQuery;
 }) {
+  const { stats, pending } = useRunStats(
+    result.runs.filter((run) => run.artifactCount > 0).map((run) => run.id),
+  );
+
   const sortHref = runsHref({
     ...query,
     sort: query.sort === "newest" ? "oldest" : "newest",
@@ -129,53 +138,61 @@ export function RunResultsTable({
               </tr>
             </thead>
             <tbody>
-              {result.runs.map((run) => (
-                <tr
-                  key={run.id}
-                  className="border-b border-line transition-colors hover:bg-[#f7f7f7]"
-                >
-                  <td className="px-4 py-4 align-top">
-                    <Link
-                      href={runHref(run.id, query)}
-                      prefetch={false}
-                      className="font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                    >
-                      {run.runNumber}
-                    </Link>
-                    <div className="mt-1 font-mono text-[11px] text-muted">
-                      {run.id}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 align-top">
-                    <Link
-                      href={runHref(run.id, query)}
-                      prefetch={false}
-                      className="font-medium text-ink underline-offset-4 hover:text-accent hover:underline"
-                    >
-                      {run.title}
-                    </Link>
-                    <div className="mt-1 text-xs text-muted">
-                      {run.experimentId}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-4 align-top tabular-nums text-ink">
-                    {formatUtc(run.startedAt)}
-                  </td>
-                  <td className="px-4 py-4 align-top">
-                    <StatusLabel type="beam" value={run.beamStatus} />
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-4 align-top text-muted">
-                    <span className="text-ink">{dataSummary(run)}</span>
-                    {run.estimatedJsonBytes !== null &&
-                      run.pointCount !== null &&
-                      run.pointCount > 0 && (
-                        <span className="block text-xs">
-                          ≈ {formatBytes(run.estimatedJsonBytes)} JSON
-                        </span>
-                      )}
-                  </td>
-                </tr>
-              ))}
+              {result.runs.map((item) => {
+                const run = {
+                  ...item,
+                  ...stats[item.id],
+                };
+                return (
+                  <tr
+                    key={run.id}
+                    className="border-b border-line transition-colors hover:bg-[#f7f7f7]"
+                  >
+                    <td className="px-4 py-4 align-top">
+                      <Link
+                        href={runHref(run.id, query)}
+                        prefetch={false}
+                        className="font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                      >
+                        {run.runNumber}
+                      </Link>
+                      <div className="mt-1 font-mono text-[11px] text-muted">
+                        {run.id}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 align-top">
+                      <Link
+                        href={runHref(run.id, query)}
+                        prefetch={false}
+                        className="font-medium text-ink underline-offset-4 hover:text-accent hover:underline"
+                      >
+                        {run.title}
+                      </Link>
+                      <div className="mt-1 text-xs text-muted">
+                        {run.experimentId}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 align-top tabular-nums text-ink">
+                      {formatUtc(run.startedAt)}
+                    </td>
+                    <td className="px-4 py-4 align-top">
+                      <StatusLabel type="beam" value={run.beamStatus} />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 align-top text-muted">
+                      <span className="text-ink">
+                        {dataSummary(run, pending)}
+                      </span>
+                      {run.estimatedJsonBytes !== null &&
+                        run.pointCount !== null &&
+                        run.pointCount > 0 && (
+                          <span className="block text-xs">
+                            ≈ {formatBytes(run.estimatedJsonBytes)} JSON
+                          </span>
+                        )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

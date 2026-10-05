@@ -31,6 +31,7 @@ export async function registryGet(path: string): Promise<Response> {
   return fetch(`${url}/${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
+    signal: AbortSignal.timeout(20_000),
   });
 }
 

@@ -1,8 +1,17 @@
+"use client";
+
+import { useRunStats } from "../data/use-run-stats";
 import { formatBytes, formatUtc } from "../format";
 import type { Run } from "../model";
 import { StatusLabel } from "./status-label";
 
 export function RunSummary({ run }: { run: Run }) {
+  const { stats, pending } = useRunStats(
+    run.artifacts.length > 0 ? [run.id] : [],
+  );
+  const pointCount =
+    run.artifacts.length > 0 ? (stats[run.id]?.pointCount ?? null) : 0;
+  const estimatedJsonBytes = stats[run.id]?.estimatedJsonBytes ?? null;
   return (
     <section
       aria-labelledby="run-title"
@@ -48,15 +57,17 @@ export function RunSummary({ run }: { run: Run }) {
         <div>
           <dt className="text-xs font-semibold text-muted">Detector values</dt>
           <dd className="mt-1 text-sm text-ink">
-            {run.pointCount === null
-              ? "Unknown"
-              : run.pointCount.toLocaleString()}
+            {pointCount === null
+              ? pending
+                ? "Counting…"
+                : "Count unavailable"
+              : pointCount.toLocaleString()}
           </dd>
-          {run.estimatedJsonBytes !== null &&
-            run.pointCount !== null &&
-            run.pointCount > 0 && (
+          {estimatedJsonBytes !== null &&
+            pointCount !== null &&
+            pointCount > 0 && (
               <span className="text-xs text-muted">
-                ≈ {formatBytes(run.estimatedJsonBytes)} JSON
+                ≈ {formatBytes(estimatedJsonBytes)} JSON
               </span>
             )}
         </div>
