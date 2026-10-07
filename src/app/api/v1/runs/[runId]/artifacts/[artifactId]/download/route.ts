@@ -7,6 +7,7 @@ export async function GET(
   const { runId, artifactId } = await context.params;
   const upstream = await registryGet(
     `runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(artifactId)}/download`,
+    { stream: true },
   );
   if (!upstream.ok || !upstream.body) {
     return new Response(null, { status: upstream.status });

@@ -26,12 +26,15 @@ export function registryConfig(): { url: string; token: string } {
   return { url: url.replace(/\/$/, ""), token };
 }
 
-export async function registryGet(path: string): Promise<Response> {
+export async function registryGet(
+  path: string,
+  options?: { stream?: boolean },
+): Promise<Response> {
   const { url, token } = registryConfig();
   return fetch(`${url}/${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
-    signal: AbortSignal.timeout(20_000),
+    signal: options?.stream ? undefined : AbortSignal.timeout(20_000),
   });
 }
 
