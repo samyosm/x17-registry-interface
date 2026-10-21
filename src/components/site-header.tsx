@@ -28,6 +28,12 @@ export function SiteHeader() {
             Runs
           </Link>
           <Link
+            href="/events"
+            className="py-5 text-sm font-medium text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Events
+          </Link>
+          <Link
             href="/diagnostics"
             className="py-5 text-sm font-medium text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
