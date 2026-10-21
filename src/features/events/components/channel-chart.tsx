@@ -1,30 +1,71 @@
 import { formatUtc } from "@/features/runs/format";
 import type { EventBucket, PmtSeries } from "../model";
+import type { EventScale } from "../range";
 
 const W = 260;
 const H = 84;
 const PAD_X = 8;
 const PAD_Y = 6;
 
+function percentile(sorted: number[], fraction: number): number {
+  return sorted[
+    Math.min(sorted.length - 1, Math.floor(fraction * sorted.length))
+  ];
+}
+
+/**
+ * Vertical range and the number of clipped buckets. Clipped mode sizes the
+ * axis from the 2nd-98th percentile of bucket means, so isolated spikes do not
+ * flatten the rest of the trace.
+ */
+function yRange(
+  points: EventBucket[],
+  scale: EventScale,
+): [number, number, number] {
+  if (points.length === 0) return [0, 1, 0];
+  if (scale === "full") {
+    return [
+      Math.min(0, ...points.map((point) => point.min)),
+      Math.max(1, ...points.map((point) => point.max)),
+      0,
+    ];
+  }
+  const means = points.map((point) => point.mean).sort((a, b) => a - b);
+  const lo = percentile(means, 0.02);
+  const hi = percentile(means, 0.98);
+  const pad = Math.max(1, (hi - lo) * 0.15);
+  const low = lo - pad;
+  const high = hi + pad;
+  return [
+    low,
+    high,
+    points.filter((point) => point.mean < low || point.mean > high).length,
+  ];
+}
+
 export function ChannelChart({
   series,
   from,
   to,
   bucketSeconds,
+  scale,
 }: {
   series: PmtSeries;
   from: number;
   to: number;
   bucketSeconds: number;
+  scale: EventScale;
 }) {
   const { points } = series;
-  const low = Math.min(0, ...points.map((point) => point.min));
-  const high = Math.max(1, ...points.map((point) => point.max));
+  const [low, high, clipped] = yRange(points, scale);
   const x = (at: string) =>
     PAD_X +
     ((W - 2 * PAD_X) * (Date.parse(at) - from)) / Math.max(1, to - from);
   const y = (value: number) =>
-    PAD_Y + (H - 2 * PAD_Y) * (1 - (value - low) / Math.max(1, high - low));
+    PAD_Y +
+    (H - 2 * PAD_Y) *
+      (1 -
+        (Math.min(high, Math.max(low, value)) - low) / Math.max(1, high - low));
   const coord = (point: EventBucket, value: number) =>
     `${x(point.at).toFixed(1)},${y(value).toFixed(1)}`;
 
@@ -108,7 +149,11 @@ export function ChannelChart({
                 cx={x(point.at)}
                 cy={y(point.mean)}
                 r="2"
-                fill="#0f62fe"
+                fill={
+                  point.mean < low || point.mean > high ? "white" : "#0f62fe"
+                }
+                stroke="#0f62fe"
+                strokeWidth="1"
               >
                 <title>
                   {`${formatUtc(point.at)} · ${point.count} events · mean ${point.mean} (min ${point.min}, max ${point.max})`}
@@ -119,7 +164,9 @@ export function ChannelChart({
         )}
       </svg>
       <p className="text-xs text-muted tabular-nums">
-        {points.length ? `${low} – ${high} ADC` : " "}
+        {points.length
+          ? `${Math.round(low)} – ${Math.round(high)} ADC${clipped ? ` · ${clipped} outside range` : ""}`
+          : " "}
       </p>
     </figure>
   );

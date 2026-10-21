@@ -7,6 +7,24 @@ export const presets = [
   { id: "7d", label: "7 days", seconds: 604_800 },
 ] as const;
 
+/** "clip" fits the axis to typical values; "full" shows every extreme. */
+export type EventScale = "clip" | "full";
+
+export function parseScale(params: RawParams): EventScale {
+  return first(params.scale) === "full" ? "full" : "clip";
+}
+
+/** Link to the page for a range, keeping the chosen scale in the URL. */
+export function eventsHref(range: EventRange, scale: EventScale): string {
+  const params = new URLSearchParams(
+    range.mode === "custom"
+      ? { from: range.fromInput, to: range.toInput }
+      : { range: range.mode },
+  );
+  if (scale === "full") params.set("scale", "full");
+  return `/events?${params.toString()}`;
+}
+
 export interface EventRange {
   /** Preset id, or "custom" for an explicit UTC interval. */
   mode: (typeof presets)[number]["id"] | "custom";

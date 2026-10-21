@@ -3,7 +3,7 @@ import { AutoRefresh } from "../components/auto-refresh";
 import { ChannelChart } from "../components/channel-chart";
 import { RangePicker } from "../components/range-picker";
 import type { DetectorEvents } from "../model";
-import { type EventRange, formatInput } from "../range";
+import { type EventRange, type EventScale, formatInput } from "../range";
 
 const groups = [
   { id: "D", title: "D-end PMTs" },
@@ -27,9 +27,11 @@ function latestDataHref(data: DetectorEvents): string | null {
 
 export function EventsPage({
   range,
+  scale,
   data,
 }: {
   range: EventRange;
+  scale: EventScale;
   data: DetectorEvents;
 }) {
   const from = Date.parse(data.from);
@@ -54,7 +56,7 @@ export function EventsPage({
         </p>
       </div>
 
-      <RangePicker range={range} />
+      <RangePicker range={range} scale={scale} />
 
       <div className="mt-10 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-line pt-4 text-sm text-muted">
         <p>
@@ -104,6 +106,7 @@ export function EventsPage({
                       from={from}
                       to={to}
                       bucketSeconds={data.bucketSeconds}
+                      scale={scale}
                     />
                   ))}
               </div>
@@ -114,6 +117,8 @@ export function EventsPage({
       <p className="mt-6 text-xs text-muted">
         Times are UTC. Readings from all VF48 boards are combined per channel.
         Hover a point for its bucket details.
+        {scale === "clip" &&
+          " With “Fit to typical values”, each axis covers the middle 96% of bucket means; hollow points lie outside it."}
       </p>
     </div>
   );
