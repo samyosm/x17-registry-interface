@@ -1,4 +1,5 @@
 import { formatUtc } from "@/features/runs/format";
+import { PipelineStatus } from "../components/pipeline-status";
 import { Timeline } from "../components/timeline";
 import type { Diagnostics } from "../model";
 
@@ -30,6 +31,8 @@ export function DiagnosticsPage({ data }: { data: Diagnostics }) {
           operator records, not verified hardware transitions.
         </p>
       </div>
+
+      <PipelineStatus data={data} />
 
       <section className="mt-12" aria-labelledby="sync-title">
         <h2 id="sync-title" className="text-lg font-semibold text-ink">

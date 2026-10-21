@@ -57,3 +57,18 @@ export function completenessLabel(status: RunCompleteness): string {
       return "Pending";
   }
 }
+
+export function formatSpan(seconds: number): string {
+  const whole = Math.max(0, Math.floor(seconds));
+  if (whole < 90) return `${whole} s`;
+  return formatDuration(
+    "1970-01-01T00:00:00Z",
+    new Date(whole * 1000).toISOString(),
+  );
+}
+
+export function formatWindow(
+  window: [string, string] | null | undefined,
+): string {
+  return window ? `${formatUtc(window[0])} → ${formatUtc(window[1])}` : "None";
+}
