@@ -25,20 +25,16 @@ function latestDataHref(data: DetectorEvents): string | null {
   return `/events?from=${formatInput(start)}&to=${formatInput(end)}`;
 }
 
+/** Title and range controls; the data-dependent part is passed as children. */
 export function EventsPage({
   range,
   scale,
-  data,
+  children,
 }: {
   range: EventRange;
   scale: EventScale;
-  data: DetectorEvents;
+  children: React.ReactNode;
 }) {
-  const from = Date.parse(data.from);
-  const to = Date.parse(data.to);
-  const total = data.channels.reduce((sum, item) => sum + item.events, 0);
-  const latestHref = latestDataHref(data);
-
   return (
     <div className="mx-auto max-w-6xl px-5 pb-24 sm:px-8">
       <div className="pt-16 sm:pt-20">
@@ -58,6 +54,27 @@ export function EventsPage({
 
       <RangePicker range={range} scale={scale} />
 
+      {children}
+    </div>
+  );
+}
+
+export function EventsResults({
+  range,
+  scale,
+  data,
+}: {
+  range: EventRange;
+  scale: EventScale;
+  data: DetectorEvents;
+}) {
+  const from = Date.parse(data.from);
+  const to = Date.parse(data.to);
+  const total = data.channels.reduce((sum, item) => sum + item.events, 0);
+  const latestHref = latestDataHref(data);
+
+  return (
+    <>
       <div className="mt-10 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-line pt-4 text-sm text-muted">
         <p>
           <span className="font-semibold text-ink tabular-nums">
@@ -120,6 +137,6 @@ export function EventsPage({
         {scale === "clip" &&
           " With “Fit to typical values”, each axis covers the middle 96% of bucket means; hollow points lie outside it."}
       </p>
-    </div>
+    </>
   );
 }
