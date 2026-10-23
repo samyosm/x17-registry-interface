@@ -7,13 +7,14 @@ const RIGHT = 12;
 const TOP = 10;
 const BOTTOM = 28;
 
-function ticks(max: number): number[] {
+/** Round tick values from 0; with `cover`, the last tick is at or above `max`. */
+function ticks(max: number, cover = false): number[] {
+  if (!Number.isFinite(max) || max <= 0) return [0];
   const step = 10 ** Math.floor(Math.log10(max / 4));
-  const size = [1, 2, 5, 10].map((m) => m * step).find((s) => max / s <= 5);
-  return Array.from(
-    { length: Math.floor(max / (size ?? step)) + 1 },
-    (_, i) => i * (size ?? step),
-  );
+  const size =
+    [1, 2, 5, 10].map((m) => m * step).find((s) => max / s <= 5) ?? step;
+  const count = cover ? Math.ceil(max / size) : Math.floor(max / size);
+  return Array.from({ length: count + 1 }, (_, i) => i * size);
 }
 
 /** Observed pair histogram over the muon template and the best fit, all on the template bins. */
@@ -22,7 +23,7 @@ export function SpectrumChart({ data }: { data: Diagnostics }) {
   const lo = edges[0];
   const hi = edges[edges.length - 1];
   const top = Math.max(1, ...observed, ...muon, ...(fit?.expected ?? []));
-  const yTicks = ticks(top);
+  const yTicks = ticks(top, true);
   const yMax = yTicks[yTicks.length - 1];
   const x = (value: number) =>
     LEFT + ((W - LEFT - RIGHT) * (value - lo)) / (hi - lo);
