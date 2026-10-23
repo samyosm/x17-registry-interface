@@ -3,7 +3,6 @@ import { presets } from "@/features/events/range";
 import {
   type IdentificationQuery,
   identificationHref,
-  MAX_LIMIT,
   MIN_LIMIT,
 } from "../query";
 
@@ -86,7 +85,6 @@ export function IdentificationForm({ query }: { query: IdentificationQuery }) {
             type="number"
             inputMode="numeric"
             min={MIN_LIMIT}
-            max={MAX_LIMIT}
             step={100}
             required
             defaultValue={limit}

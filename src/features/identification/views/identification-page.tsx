@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { formatUtc } from "@/features/runs/format";
 import { IdentificationForm } from "../components/identification-form";
 import type { Identification, ScintillatorResult } from "../model";
-import type { IdentificationQuery } from "../query";
+import { diagnosticsHref, type IdentificationQuery } from "../query";
 
 /** Title and period controls; the data-dependent part is passed as children. */
 export function IdentificationPage({
@@ -44,7 +45,13 @@ function verdictLabel(item: ScintillatorResult, minPairs: number): string {
 
 const headerClass = "px-4 py-3 font-semibold";
 
-export function IdentificationResults({ data }: { data: Identification }) {
+export function IdentificationResults({
+  data,
+  query,
+}: {
+  data: Identification;
+  query: IdentificationQuery;
+}) {
   const identified = data.scintillators.filter(
     (item) => item.verdict !== null && item.verdict !== "muon-only",
   ).length;
@@ -80,7 +87,7 @@ export function IdentificationResults({ data }: { data: Identification }) {
         </div>
       ) : (
         <div className="mt-8 overflow-x-auto border-t border-line">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[800px] border-collapse text-left text-sm">
             <caption className="sr-only">
               Source identification per scintillator
             </caption>
@@ -103,6 +110,9 @@ export function IdentificationResults({ data }: { data: Identification }) {
                 </th>
                 <th scope="col" className={`${headerClass} text-right`}>
                   Δ
+                </th>
+                <th scope="col" className={`${headerClass} text-right`}>
+                  Diagnostics
                 </th>
               </tr>
             </thead>
@@ -140,6 +150,19 @@ export function IdentificationResults({ data }: { data: Identification }) {
                     </td>
                     <td className="px-4 py-3 text-right text-muted tabular-nums">
                       {item.delta === null ? "—" : item.delta.toFixed(1)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={diagnosticsHref(
+                          item.scintillator,
+                          query.range,
+                          query.limit,
+                        )}
+                        prefetch={false}
+                        className="text-accent hover:underline"
+                      >
+                        Inspect
+                      </Link>
                     </td>
                   </tr>
                 );

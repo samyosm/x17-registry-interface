@@ -2,7 +2,6 @@ import { type EventRange, parseRange, presets } from "@/features/events/range";
 
 export const DEFAULT_LIMIT = 10_000;
 export const MIN_LIMIT = 100;
-export const MAX_LIMIT = 200_000;
 
 type RawParams = Record<string, string | string[] | undefined>;
 
@@ -20,7 +19,7 @@ function first(value: string | string[] | undefined): string {
 export function parseLimit(value: string): number {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed)) return DEFAULT_LIMIT;
-  return Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, parsed));
+  return Math.max(MIN_LIMIT, parsed);
 }
 
 export function parseQuery(
@@ -42,4 +41,13 @@ export function identificationHref(range: EventRange, limit: number): string {
   );
   params.set("limit", String(limit));
   return `/identification?${params.toString()}`;
+}
+
+export function diagnosticsHref(
+  scintillator: string,
+  range: EventRange,
+  limit: number,
+): string {
+  const query = identificationHref(range, limit).split("?")[1];
+  return `/identification/${encodeURIComponent(scintillator)}?${query}`;
 }

@@ -30,7 +30,7 @@ async function LoadedIdentification({ query }: { query: IdentificationQuery }) {
       </div>
     );
   }
-  return <IdentificationResults data={outcome.data} />;
+  return <IdentificationResults data={outcome.data} query={query} />;
 }
 
 export default async function Page({
