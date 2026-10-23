@@ -72,6 +72,12 @@ export interface Diagnostics {
   } | null;
   templateMedian: number;
   scale: number | null;
+  /** Energy calibration of this scintillator: template units = factor × the stored √(UD). */
+  calibration: {
+    kevPerUnit: number | null;
+    gamma: number | null;
+    factor: number;
+  };
   /** Raw readings of the D and U PMT in bins of 1 ADC from `start`. */
   raw: { start: number; d: number[]; u: number[] };
   /** Pairs of equal time that have both readings at or above each candidate threshold. */

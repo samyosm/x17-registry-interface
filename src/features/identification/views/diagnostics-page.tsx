@@ -68,10 +68,14 @@ export function findings(data: Diagnostics): string[] {
     result.push(
       `${percent(data.zero, data.pairs).toFixed(0)} % of the pairs are exactly 0: one of the two readings is zero or negative. A pedestal may need to be subtracted.`,
     );
-  if (data.scale !== null && (data.scale < 0.7 || data.scale > 1.4))
+  if (data.scale !== null && (data.scale < 0.7 || data.scale > 1.4)) {
+    const { kevPerUnit } = data.calibration;
     result.push(
-      `The median pair value is ${data.scale.toFixed(2)} × the muon template median. If this scintillator has no source, the real data is ${data.scale.toFixed(2)} × larger than the simulation: raise the simulated gain by that factor, or divide the real values by it.`,
+      kevPerUnit === null
+        ? `The median pair value is ${data.scale.toFixed(2)} × the muon template median. If this scintillator has no source, the real data is ${data.scale.toFixed(2)} × larger than the simulation: raise the simulated gain by that factor, or divide the real values by it.`
+        : `After the energy calibration, the median pair value is ${data.scale.toFixed(2)} × the muon template median. If this scintillator sees cosmic muons only, set kev_per_template_unit in config.toml to ${(kevPerUnit * data.scale).toFixed(1)} (now ${kevPerUnit}), regenerate the templates and restart the registry. It applies to every scintillator; check the others with Inspect afterwards.`,
     );
+  }
   return result;
 }
 
@@ -167,6 +171,15 @@ export function DiagnosticsView({
             (valid only if the scintillator sees cosmic muons alone)
           </p>
         )}
+        <p className="mt-2 text-sm text-muted">
+          {data.calibration.kevPerUnit === null
+            ? "No energy calibration: the stored √(UD) is compared with the templates as it is."
+            : `Energy calibration: ${
+                data.calibration.gamma === null
+                  ? "mean γ"
+                  : `γ = ${data.calibration.gamma} keV/ADC`
+              } for this scintillator, one template unit = ${data.calibration.kevPerUnit} keV, so the stored √(UD) is multiplied by ${data.calibration.factor.toFixed(3)}.`}
+        </p>
       </section>
 
       <section className="mt-12" aria-labelledby="spectrum">

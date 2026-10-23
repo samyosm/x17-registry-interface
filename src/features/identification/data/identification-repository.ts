@@ -68,6 +68,7 @@ const DIAGNOSTICS_FIELDS = [
   "scale",
   "raw",
   "scan",
+  "calibration",
 ];
 
 /** The registry and its x17-isotope-id library are deployed apart from this site and can lag behind it. */
