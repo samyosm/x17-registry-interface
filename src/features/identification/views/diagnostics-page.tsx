@@ -27,6 +27,19 @@ export function findings(data: Diagnostics): string[] {
     );
     return result;
   }
+  const { filter } = data;
+  if (data.matched > data.pairs)
+    result.push(
+      `${(data.matched - data.pairs).toLocaleString()} of ${data.matched.toLocaleString()} pairs were rejected by the acquisition threshold (${filter.mode === "both" ? "both readings" : "either reading"} at least ${filter.threshold}).`,
+    );
+  if (
+    !filter.enabled &&
+    data.values.p99 !== null &&
+    data.values.p99 < 0.05 * data.templateMedian
+  )
+    result.push(
+      `99 % of the pairs are below ${number(data.values.p99)}, far under the muon template (median ${number(data.templateMedian)}): they are baseline noise, not events. Set enabled = true under [filter] in config.toml, with a threshold above the noise.`,
+    );
   if (percent(data.unpaired, readings) > 10)
     result.push(
       `${percent(data.unpaired, readings).toFixed(0)} % of the readings have no partner with the same time and are ignored.`,

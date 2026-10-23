@@ -51,6 +51,8 @@ export interface Diagnostics {
   d: ValueSummary;
   u: ValueSummary;
   pairs: number;
+  matched: number;
+  filter: { enabled: boolean; mode: string; threshold: number };
   unpaired: number;
   values: ValueSummary;
   below: number;
