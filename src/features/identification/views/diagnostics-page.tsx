@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatUtc } from "@/features/runs/format";
+import { RawChart } from "../components/raw-chart";
 import { SpectrumChart } from "../components/spectrum-chart";
 import type { Diagnostics, ValueSummary } from "../model";
 import { type IdentificationQuery, identificationHref } from "../query";
@@ -13,6 +14,20 @@ const number = (value: number | null) =>
 
 const percent = (part: number, whole: number) =>
   whole === 0 ? 0 : (100 * part) / whole;
+
+/** Share of a PMT's readings at or above `threshold`; the raw histogram ends at start + length. */
+function shareAbove(
+  counts: number[],
+  start: number,
+  total: number,
+  threshold: number,
+): number {
+  const inside = counts.reduce((sum, n) => sum + n, 0);
+  const above = counts
+    .slice(Math.max(0, Math.ceil(threshold - start)))
+    .reduce((sum, n) => sum + n, 0);
+  return percent(above + (total - inside), total);
+}
 
 /** Plain-language reasons the data may not match the templates. */
 export function findings(data: Diagnostics): string[] {
@@ -104,7 +119,7 @@ export function DiagnosticsView({
     <div className="mx-auto max-w-6xl px-5 pb-24 sm:px-8">
       <div className="pt-16 sm:pt-20">
         <Link
-          href={identificationHref(query.range, query.limit)}
+          href={identificationHref(query.range)}
           className="text-sm text-accent hover:underline"
         >
           ← Source identification
@@ -116,8 +131,6 @@ export function DiagnosticsView({
           D{data.scintillator} + U{data.scintillator} ·{" "}
           {data.readings.toLocaleString()} readings · {formatUtc(data.from)} →{" "}
           {formatUtc(data.to)}
-          {data.truncated &&
-            ` · first ${data.limit.toLocaleString()} readings only`}
         </p>
       </div>
 
@@ -172,6 +185,95 @@ export function DiagnosticsView({
           below and {data.above.toLocaleString()} above the range{" "}
           {data.edges[0]}–{data.edges[data.edges.length - 1]} (not drawn)
         </p>
+      </section>
+
+      <section className="mt-12" aria-labelledby="raw">
+        <h2 id="raw" className="mb-4 text-lg font-semibold text-ink">
+          Raw readings and the threshold
+        </h2>
+        <RawChart data={data} />
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-muted">
+          Baseline noise piles up on the left. Real events appear as an excess
+          above it. The acquisition threshold should sit just above the noise:
+          too low and noise pairs flood the spectrum, too high and weak events
+          are lost.
+          {data.d.n > 0 && data.u.n > 0 && (
+            <>
+              {" "}
+              At {data.filter.threshold} ADC,{" "}
+              {shareAbove(
+                data.raw.d,
+                data.raw.start,
+                data.d.n,
+                data.filter.threshold,
+              ).toFixed(2)}{" "}
+              % of the D readings and{" "}
+              {shareAbove(
+                data.raw.u,
+                data.raw.start,
+                data.u.n,
+                data.filter.threshold,
+              ).toFixed(2)}{" "}
+              % of the U readings are at or above it.
+            </>
+          )}
+        </p>
+      </section>
+
+      <section className="mt-12" aria-labelledby="scan">
+        <h2 id="scan" className="text-lg font-semibold text-ink">
+          Pairs kept at each threshold
+        </h2>
+        <p className="mt-2 max-w-3xl text-xs leading-5 text-muted">
+          Pairs of equal time (D{data.scintillator} + U{data.scintillator}) that
+          have both readings at or above the threshold, over the whole period.{" "}
+          {data.matched.toLocaleString()} pairs exist before any threshold.
+          Noise needs both PMTs to be high at once, so a lower threshold than
+          for a single PMT can still keep noise out.
+        </p>
+        <div className="mt-4 overflow-x-auto border-t border-line">
+          <table className="w-full min-w-[640px] border-collapse text-right text-sm">
+            <caption className="sr-only">Pairs kept at each threshold</caption>
+            <thead className="bg-surface text-xs font-semibold text-muted">
+              <tr>
+                <th scope="col" className="px-4 py-3 text-left font-semibold">
+                  Threshold (ADC)
+                </th>
+                {data.scan.thresholds.map((threshold) => (
+                  <th
+                    key={threshold}
+                    scope="col"
+                    className={`px-4 py-3 font-semibold ${
+                      data.filter.enabled && threshold === data.filter.threshold
+                        ? "text-accent"
+                        : ""
+                    }`}
+                  >
+                    {threshold}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-line">
+                <th
+                  scope="row"
+                  className="px-4 py-3 text-left font-semibold text-ink"
+                >
+                  Pairs kept
+                </th>
+                {data.scan.pairs.map((pairs, i) => (
+                  <td
+                    key={data.scan.thresholds[i]}
+                    className="px-4 py-3 text-muted tabular-nums"
+                  >
+                    {pairs.toLocaleString()}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="mt-12" aria-labelledby="values">

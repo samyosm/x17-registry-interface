@@ -28,13 +28,15 @@ export function registryConfig(): { url: string; token: string } {
 
 export async function registryGet(
   path: string,
-  options?: { stream?: boolean },
+  options?: { stream?: boolean; timeoutMs?: number },
 ): Promise<Response> {
   const { url, token } = registryConfig();
   return fetch(`${url}/${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
-    signal: options?.stream ? undefined : AbortSignal.timeout(20_000),
+    signal: options?.stream
+      ? undefined
+      : AbortSignal.timeout(options?.timeoutMs ?? 20_000),
   });
 }
 

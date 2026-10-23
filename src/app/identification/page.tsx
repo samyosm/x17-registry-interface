@@ -15,11 +15,7 @@ import {
 export const metadata: Metadata = { title: "Source identification" };
 
 async function LoadedIdentification({ query }: { query: IdentificationQuery }) {
-  const outcome = await getIdentification(
-    query.range.from,
-    query.range.to,
-    query.limit,
-  );
+  const outcome = await getIdentification(query.range.from, query.range.to);
   if (outcome.status !== "ok") {
     return (
       <div className="mt-10">
@@ -45,7 +41,6 @@ export default async function Page({
   // identifies a view; a new key shows the skeleton while it loads.
   const view = [
     query.range.mode,
-    query.limit,
     query.range.mode === "custom"
       ? `${query.range.fromInput}/${query.range.toInput}`
       : "",

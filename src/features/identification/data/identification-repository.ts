@@ -36,26 +36,73 @@ async function problem(response: Response): Promise<IdentificationProblem> {
   );
 }
 
+const IDENTIFICATION_FIELDS = [
+  "readings",
+  "threshold",
+  "minPairs",
+  "filter",
+  "scintillators",
+];
+
+/** A whole period is analysed in the database, which can take a while; below Node's 300 s limit. */
+const TIMEOUT_MS = 290_000;
+
+const DIAGNOSTICS_FIELDS = [
+  "scintillator",
+  "threshold",
+  "d",
+  "u",
+  "pairs",
+  "matched",
+  "filter",
+  "unpaired",
+  "values",
+  "below",
+  "above",
+  "zero",
+  "edges",
+  "observed",
+  "muon",
+  "fit",
+  "templateMedian",
+  "scale",
+  "raw",
+  "scan",
+];
+
+/** The registry and its x17-isotope-id library are deployed apart from this site and can lag behind it. */
+function outdated(data: unknown, required: string[]): string | null {
+  const missing = required.filter(
+    (key) => (data as Record<string, unknown> | null)?.[key] === undefined,
+  );
+  return missing.length === 0
+    ? null
+    : `The registry answer lacks ${missing.join(", ")}. The registry or its x17-isotope-id library on the server is older than this site: pull both, then restart the registry service.`;
+}
+
 async function fetchJson<T>(
   path: string,
+  required: string[],
   accept404 = false,
 ): Promise<
   { status: "ok"; data: T } | { status: "missing" } | IdentificationProblem
 > {
   let response: Response;
   try {
-    response = await registryGet(path);
+    response = await registryGet(path, { timeoutMs: TIMEOUT_MS });
   } catch (error) {
     return failed(
       error instanceof Error && error.name === "TimeoutError"
-        ? "The registry did not answer in time. Try a shorter period or a lower maximum."
+        ? "The registry did not answer in time. Try a shorter period."
         : `The registry could not be reached: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
   if (accept404 && response.status === 404) return { status: "missing" };
   if (!response.ok) return problem(response);
   try {
-    return { status: "ok", data: (await response.json()) as T };
+    const data = (await response.json()) as T;
+    const stale = outdated(data, required);
+    return stale ? failed(stale) : { status: "ok", data };
   } catch (error) {
     return failed(
       `The registry answer could not be read: ${error instanceof Error ? error.message : String(error)}`,
@@ -66,11 +113,11 @@ async function fetchJson<T>(
 export async function getIdentification(
   from: string,
   to: string,
-  limit: number,
 ): Promise<IdentificationOutcome> {
-  const params = new URLSearchParams({ from, to, limit: String(limit) });
+  const params = new URLSearchParams({ from, to });
   const result = await fetchJson<Identification>(
     `identification?${params.toString()}`,
+    IDENTIFICATION_FIELDS,
   );
   return result.status === "missing"
     ? failed("The registry has no identification endpoint.")
@@ -81,11 +128,11 @@ export async function getDiagnostics(
   scintillator: string,
   from: string,
   to: string,
-  limit: number,
 ): Promise<DiagnosticsOutcome> {
-  const params = new URLSearchParams({ from, to, limit: String(limit) });
+  const params = new URLSearchParams({ from, to });
   return fetchJson<Diagnostics>(
     `identification/${encodeURIComponent(scintillator)}?${params.toString()}`,
+    DIAGNOSTICS_FIELDS,
     true,
   );
 }

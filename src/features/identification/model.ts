@@ -10,15 +10,20 @@ export interface ScintillatorResult {
   margin: number | null;
 }
 
+export interface AcquisitionFilter {
+  enabled: boolean;
+  mode: string;
+  threshold: number;
+}
+
 export interface Identification {
   from: string;
   to: string;
-  limit: number;
+  /** Every stored reading in the period, whether or not it passes the acquisition threshold. */
   readings: number;
-  truncated: boolean;
-  readingsUntil: string | null;
   threshold: number;
   minPairs: number;
+  filter: AcquisitionFilter;
   scintillators: ScintillatorResult[];
 }
 
@@ -44,15 +49,13 @@ export interface Diagnostics {
   scintillator: string;
   from: string;
   to: string;
-  limit: number;
   readings: number;
-  truncated: boolean;
   threshold: number;
   d: ValueSummary;
   u: ValueSummary;
   pairs: number;
   matched: number;
-  filter: { enabled: boolean; mode: string; threshold: number };
+  filter: AcquisitionFilter;
   unpaired: number;
   values: ValueSummary;
   below: number;
@@ -69,6 +72,10 @@ export interface Diagnostics {
   } | null;
   templateMedian: number;
   scale: number | null;
+  /** Raw readings of the D and U PMT in bins of 1 ADC from `start`. */
+  raw: { start: number; d: number[]; u: number[] };
+  /** Pairs of equal time that have both readings at or above each candidate threshold. */
+  scan: { thresholds: number[]; pairs: number[] };
 }
 
 export type DiagnosticsOutcome =

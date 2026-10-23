@@ -23,7 +23,6 @@ async function LoadedDiagnostics({
     scintillator,
     query.range.from,
     query.range.to,
-    query.limit,
   );
   if (outcome.status === "missing") notFound();
   if (outcome.status !== "ok") {
@@ -52,7 +51,6 @@ export default async function Page({
   const view = [
     scintillator,
     query.range.mode,
-    query.limit,
     query.range.mode === "custom"
       ? `${query.range.fromInput}/${query.range.toInput}`
       : "",

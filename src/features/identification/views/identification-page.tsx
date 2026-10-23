@@ -69,13 +69,12 @@ export function IdentificationResults({
           </span>{" "}
           of {data.scintillators.length} scintillators with a source
         </p>
-        {data.truncated && data.readingsUntil && (
-          <p className="mt-2 text-ink">
-            Only the first {data.limit.toLocaleString()} readings of the period
-            were used, up to {formatUtc(data.readingsUntil)}. Raise the maximum
-            or shorten the period to cover the rest.
-          </p>
-        )}
+        <p className="mt-2">
+          Every reading of the period is used.{" "}
+          {data.filter.enabled
+            ? `A pair counts when ${data.filter.mode === "both" ? "both PMTs read" : "either PMT reads"} at least ${data.filter.threshold} ADC; the stored data is not changed.`
+            : "No acquisition threshold is applied."}
+        </p>
       </div>
 
       {data.readings === 0 ? (
@@ -153,11 +152,7 @@ export function IdentificationResults({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        href={diagnosticsHref(
-                          item.scintillator,
-                          query.range,
-                          query.limit,
-                        )}
+                        href={diagnosticsHref(item.scintillator, query.range)}
                         prefetch={false}
                         className="text-accent hover:underline"
                       >

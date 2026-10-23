@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { presets } from "@/features/events/range";
-import {
-  type IdentificationQuery,
-  identificationHref,
-  MIN_LIMIT,
-} from "../query";
+import { type IdentificationQuery, identificationHref } from "../query";
 
 const inputClass =
   "h-11 w-full border-b border-line bg-surface px-3 text-sm text-ink outline-none transition-colors focus:border-accent";
@@ -17,7 +13,7 @@ const segment = (active: boolean) =>
   }`;
 
 export function IdentificationForm({ query }: { query: IdentificationQuery }) {
-  const { range, limit, run } = query;
+  const { range, run } = query;
   return (
     <div className="mt-10 space-y-6">
       <nav aria-label="Time range">
@@ -28,10 +24,7 @@ export function IdentificationForm({ query }: { query: IdentificationQuery }) {
             return (
               <li key={preset.id}>
                 <Link
-                  href={identificationHref(
-                    { ...range, mode: preset.id },
-                    limit,
-                  )}
+                  href={identificationHref({ ...range, mode: preset.id })}
                   aria-current={active ? "true" : undefined}
                   className={segment(active)}
                 >
@@ -47,7 +40,7 @@ export function IdentificationForm({ query }: { query: IdentificationQuery }) {
         action="/identification"
         method="get"
         aria-label="Custom period"
-        className="grid gap-4 sm:grid-cols-[220px_220px_160px_auto] sm:items-end"
+        className="grid gap-4 sm:grid-cols-[220px_220px_auto] sm:items-end"
       >
         <div>
           <label htmlFor="identify-from" className={labelClass}>
@@ -72,22 +65,6 @@ export function IdentificationForm({ query }: { query: IdentificationQuery }) {
             type="datetime-local"
             required
             defaultValue={range.toInput}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor="identify-limit" className={labelClass}>
-            Maximum readings
-          </label>
-          <input
-            id="identify-limit"
-            name="limit"
-            type="number"
-            inputMode="numeric"
-            min={MIN_LIMIT}
-            step={100}
-            required
-            defaultValue={limit}
             className={inputClass}
           />
         </div>
