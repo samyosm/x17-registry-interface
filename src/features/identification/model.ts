@@ -22,9 +22,13 @@ export interface Identification {
   scintillators: ScintillatorResult[];
 }
 
+export type IdentificationProblem =
+  | { status: "unavailable"; message: string }
+  | { status: "failed"; message: string };
+
 export type IdentificationOutcome =
   | { status: "ok"; data: Identification }
-  | { status: "unavailable"; message: string };
+  | IdentificationProblem;
 
 export interface ValueSummary {
   n: number;
@@ -67,5 +71,5 @@ export interface Diagnostics {
 
 export type DiagnosticsOutcome =
   | { status: "ok"; data: Diagnostics }
-  | { status: "unavailable"; message: string }
-  | { status: "missing" };
+  | { status: "missing" }
+  | IdentificationProblem;

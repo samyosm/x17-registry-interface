@@ -26,11 +26,15 @@ async function LoadedDiagnostics({
     query.limit,
   );
   if (outcome.status === "missing") notFound();
-  if (outcome.status === "unavailable") {
+  if (outcome.status !== "ok") {
     return (
       <div className="mx-auto max-w-6xl px-5 pt-16 sm:px-8">
         <DataState
-          title="Source identification is not set up"
+          title={
+            outcome.status === "unavailable"
+              ? "Source identification is not set up"
+              : "Diagnostics failed"
+          }
           description={outcome.message}
         />
       </div>

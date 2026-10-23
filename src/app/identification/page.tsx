@@ -20,11 +20,15 @@ async function LoadedIdentification({ query }: { query: IdentificationQuery }) {
     query.range.to,
     query.limit,
   );
-  if (outcome.status === "unavailable") {
+  if (outcome.status !== "ok") {
     return (
       <div className="mt-10">
         <DataState
-          title="Source identification is not set up"
+          title={
+            outcome.status === "unavailable"
+              ? "Source identification is not set up"
+              : "Source identification failed"
+          }
           description={outcome.message}
         />
       </div>
