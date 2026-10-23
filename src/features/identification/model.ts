@@ -1,30 +1,80 @@
-export interface ScintillatorResult {
-  scintillator: string;
-  pairs: number;
-  pairsInRange: number;
-  /** An isotope, "muon-only", or null when too few pairs were in range. */
-  verdict: string | null;
-  best: string | null;
-  fraction: number | null;
-  delta: number | null;
-  margin: number | null;
-}
-
 export interface AcquisitionFilter {
   enabled: boolean;
   mode: string;
   threshold: number;
 }
 
+export type VerdictCode = "none" | "detected" | "identified";
+
+export interface BarResult {
+  scintillator: string;
+  usable: boolean;
+  /** Why the bar is left out of the analysis, when it is. */
+  reason: string | null;
+  /** Pairs with both PMTs above the selection threshold in the window. */
+  pairs: number;
+  /** Pairs expected from the reference period at the same number of triggers. */
+  expected: number;
+  excess: number;
+  z: number | null;
+}
+
+export interface SourceScore {
+  name: string;
+  /** Likelihood-ratio statistic of the best position of this source against no source. */
+  ts: number;
+  /** Bar index (0-15) of the best position. */
+  centre: number;
+  /** False when the activity of the source today is too low to be seen. */
+  plausible: boolean;
+  activityBq: number | null;
+}
+
+export interface Period {
+  from: string;
+  to: string;
+}
+
 export interface Identification {
   from: string;
   to: string;
-  /** Every stored reading in the period, whether or not it passes the acquisition threshold. */
-  readings: number;
-  threshold: number;
-  minPairs: number;
-  filter: AcquisitionFilter;
-  scintillators: ScintillatorResult[];
+  reference: Period & {
+    /** "before" or "after" the window (chosen by the registry), or "custom". */
+    mode: string;
+    events: number;
+    rate: number;
+  };
+  events: { window: number; rate: number; scale: number };
+  settings: {
+    threshold: number;
+    binWidth: number;
+    max: number;
+    detectionTs: number;
+    marginTs: number;
+  };
+  bars: BarResult[];
+  unusableBars: number[];
+  detection: {
+    pairs: number;
+    expected: number;
+    excess: number;
+    rateZ: number | null;
+    barsAbove3: number;
+  };
+  sources: SourceScore[];
+  verdict: {
+    code: VerdictCode;
+    source: string | null;
+    candidates: string[];
+    centre: number | null;
+  };
+  spectrum: {
+    edges: number[];
+    bars: number[];
+    window: number[];
+    expected: number[];
+  };
+  warnings: string[];
 }
 
 export type IdentificationProblem =

@@ -1,9 +1,8 @@
-import Link from "next/link";
-import { DataState } from "@/components/data-state";
 import { formatUtc } from "@/features/runs/format";
+import { ExcessChart } from "../components/excess-chart";
 import { IdentificationForm } from "../components/identification-form";
-import type { Identification, ScintillatorResult } from "../model";
-import { diagnosticsHref, type IdentificationQuery } from "../query";
+import type { Identification } from "../model";
+import type { IdentificationQuery } from "../query";
 
 /** Title and period controls; the data-dependent part is passed as children. */
 export function IdentificationPage({
@@ -23,10 +22,11 @@ export function IdentificationPage({
           Source identification.
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-          Choose a period to find which radioactive source, if any, is near each
-          scintillator. The readings of its two PMTs are paired and combined
-          into one energy histogram, which is compared with the spectra of the
-          known sources and of cosmic muons.
+          Choose a period to find out whether a radioactive source was placed
+          near the detector, which one, and next to which scintillator. The
+          period is compared with a reference period without a source: a source
+          shows as an excess of coincident U and D pulses, and its energy
+          spectrum and its position along the bars identify it.
         </p>
       </div>
 
@@ -37,142 +37,225 @@ export function IdentificationPage({
   );
 }
 
-function verdictLabel(item: ScintillatorResult, minPairs: number): string {
-  if (item.verdict === null)
-    return item.pairs === 0 ? "No data" : `Fewer than ${minPairs} pairs`;
-  return item.verdict === "muon-only" ? "Cosmic muons only" : item.verdict;
-}
-
 const headerClass = "px-4 py-3 font-semibold";
 
-export function IdentificationResults({
-  data,
-  query,
-}: {
-  data: Identification;
-  query: IdentificationQuery;
-}) {
-  const identified = data.scintillators.filter(
-    (item) => item.verdict !== null && item.verdict !== "muon-only",
-  ).length;
+function sentence(data: Identification): { title: string; detail: string } {
+  const { verdict } = data;
+  const place =
+    verdict.centre === null ? "" : ` near scintillator ${verdict.centre}`;
+  if (verdict.code === "none")
+    return {
+      title: "No source seen",
+      detail:
+        "The window shows no excess over the reference period beyond what chance explains.",
+    };
+  if (verdict.code === "identified")
+    return {
+      title: `${verdict.source}${place}`,
+      detail: "The excess has the spectrum and the position of this source.",
+    };
+  return {
+    title: `A source is present${place}`,
+    detail: `Its spectrum does not single out one isotope${
+      verdict.candidates.length
+        ? `; closest: ${verdict.candidates.join(", ")}`
+        : ""
+    }.`,
+  };
+}
+
+const number = (value: number, digits = 1) =>
+  value.toLocaleString(undefined, {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits,
+  });
+
+export function IdentificationResults({ data }: { data: Identification }) {
+  const { title, detail } = sentence(data);
+  const found = data.verdict.code !== "none";
+  const unusable = data.bars.filter((bar) => !bar.usable);
 
   return (
     <>
       <div className="mt-10 border-t border-line pt-4 text-sm text-muted">
         <p>
           <span className="font-semibold text-ink tabular-nums">
-            {data.readings.toLocaleString()}
+            {data.events.window.toLocaleString()}
           </span>{" "}
-          readings · {formatUtc(data.from)} → {formatUtc(data.to)} ·{" "}
-          <span className="font-semibold text-ink tabular-nums">
-            {identified}
-          </span>{" "}
-          of {data.scintillators.length} scintillators with a source
+          triggers · {formatUtc(data.from)} → {formatUtc(data.to)}
         </p>
         <p className="mt-2">
-          Every reading of the period is used.{" "}
-          {data.filter.enabled
-            ? `A pair counts when ${data.filter.mode === "both" ? "both PMTs read" : "either PMT reads"} at least ${data.filter.threshold} ADC; the stored data is not changed.`
-            : "No acquisition threshold is applied."}
+          Reference ({data.reference.mode}):{" "}
+          <span className="tabular-nums">
+            {data.reference.events.toLocaleString()}
+          </span>{" "}
+          triggers · {formatUtc(data.reference.from)} →{" "}
+          {formatUtc(data.reference.to)}. A pair counts when both PMTs read at
+          least {data.settings.threshold} ADC; the stored data is not changed.
         </p>
       </div>
 
-      {data.readings === 0 ? (
-        <div className="mt-8">
-          <DataState
-            title="No detector readings in this period"
-            description="Pick a period that contains stored detector records."
-          />
+      {data.warnings.length > 0 && (
+        <ul className="mt-6 space-y-2 border-l-4 border-[#f1c21b] bg-surface px-4 py-3 text-sm text-ink">
+          {data.warnings.map((warning) => (
+            <li key={warning}>{warning}</li>
+          ))}
+        </ul>
+      )}
+
+      <section className="mt-8 bg-surface px-6 py-6" aria-label="Verdict">
+        <p className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
+          {data.verdict.code === "identified"
+            ? "Identified"
+            : found
+              ? "Detected"
+              : "Result"}
+        </p>
+        <p className="mt-2 text-3xl font-semibold tracking-tight text-ink">
+          {title}
+        </p>
+        <p className="mt-2 text-sm text-muted">{detail}</p>
+        <p className="mt-4 text-sm text-muted tabular-nums">
+          {number(data.detection.excess, 0)} excess pairs over{" "}
+          {number(data.detection.expected, 0)} expected (
+          {data.detection.rateZ === null
+            ? "no rate"
+            : `${data.detection.rateZ >= 0 ? "+" : ""}${number(data.detection.rateZ)} σ`}
+          ) · {data.detection.barsAbove3} scintillators above 3 σ
+        </p>
+      </section>
+
+      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-ink">
+            Spectrum of the excess
+          </h2>
+          <ExcessChart data={data} />
         </div>
-      ) : (
-        <div className="mt-8 overflow-x-auto border-t border-line">
-          <table className="w-full min-w-[800px] border-collapse text-left text-sm">
-            <caption className="sr-only">
-              Source identification per scintillator
-            </caption>
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-ink">
+            Sources compared
+          </h2>
+          <table className="w-full border-collapse text-left text-sm">
             <thead className="bg-surface text-xs font-semibold text-muted">
               <tr>
                 <th scope="col" className={headerClass}>
-                  Scintillator
+                  Source
                 </th>
                 <th scope="col" className={`${headerClass} text-right`}>
-                  Pairs
+                  Score
+                </th>
+                <th scope="col" className={`${headerClass} text-right`}>
+                  Best position
                 </th>
                 <th scope="col" className={headerClass}>
-                  Result
-                </th>
-                <th scope="col" className={headerClass}>
-                  Closest source
-                </th>
-                <th scope="col" className={`${headerClass} text-right`}>
-                  Source share
-                </th>
-                <th scope="col" className={`${headerClass} text-right`}>
-                  Δ
-                </th>
-                <th scope="col" className={`${headerClass} text-right`}>
-                  Diagnostics
+                  Note
                 </th>
               </tr>
             </thead>
             <tbody>
-              {data.scintillators.map((item) => {
-                const found =
-                  item.verdict !== null && item.verdict !== "muon-only";
-                return (
-                  <tr
-                    key={item.scintillator}
-                    className="border-b border-line transition-colors hover:bg-[#f7f7f7]"
-                  >
-                    <th
-                      scope="row"
-                      className="px-4 py-3 font-semibold text-ink"
-                    >
-                      {item.scintillator}
-                      <span className="ml-2 font-normal text-muted">
-                        D{item.scintillator} + U{item.scintillator}
-                      </span>
-                    </th>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {item.pairs.toLocaleString()}
-                    </td>
-                    <td
-                      className={`px-4 py-3 ${found ? "font-semibold text-ink" : "text-muted"}`}
-                    >
-                      {verdictLabel(item, data.minPairs)}
-                    </td>
-                    <td className="px-4 py-3 text-muted">{item.best ?? "—"}</td>
-                    <td className="px-4 py-3 text-right text-muted tabular-nums">
-                      {item.fraction === null
-                        ? "—"
-                        : `${(item.fraction * 100).toFixed(1)} %`}
-                    </td>
-                    <td className="px-4 py-3 text-right text-muted tabular-nums">
-                      {item.delta === null ? "—" : item.delta.toFixed(1)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={diagnosticsHref(item.scintillator, query.range)}
-                        prefetch={false}
-                        className="text-accent hover:underline"
-                      >
-                        Inspect
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
+              {data.sources.map((source) => (
+                <tr key={source.name} className="border-b border-line">
+                  <th scope="row" className="px-4 py-3 font-semibold text-ink">
+                    {source.name}
+                  </th>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {number(source.ts)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-muted tabular-nums">
+                    {source.centre}
+                  </td>
+                  <td className="px-4 py-3 text-muted">
+                    {source.plausible
+                      ? ""
+                      : `Only ${number(source.activityBq ?? 0, 0)} Bq today`}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+          <p className="mt-2 text-xs leading-5 text-muted">
+            Score: 2 ln of the likelihood gain over no source. Below{" "}
+            {data.settings.detectionTs} nothing is reported; a source is named
+            only when it leads the next one by {data.settings.marginTs}.
+          </p>
         </div>
-      )}
+      </div>
+
+      <div className="mt-10 overflow-x-auto border-t border-line">
+        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+          <caption className="sr-only">Pairs per scintillator</caption>
+          <thead className="bg-surface text-xs font-semibold text-muted">
+            <tr>
+              <th scope="col" className={headerClass}>
+                Scintillator
+              </th>
+              <th scope="col" className={`${headerClass} text-right`}>
+                Pairs
+              </th>
+              <th scope="col" className={`${headerClass} text-right`}>
+                Expected
+              </th>
+              <th scope="col" className={`${headerClass} text-right`}>
+                Excess
+              </th>
+              <th scope="col" className={`${headerClass} text-right`}>
+                σ
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.bars.map((bar) => (
+              <tr
+                key={bar.scintillator}
+                className="border-b border-line transition-colors hover:bg-[#f7f7f7]"
+              >
+                <th scope="row" className="px-4 py-3 font-semibold text-ink">
+                  {bar.scintillator}
+                  <span className="ml-2 font-normal text-muted">
+                    D{bar.scintillator} + U{bar.scintillator}
+                  </span>
+                </th>
+                {bar.usable ? (
+                  <>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {bar.pairs.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted tabular-nums">
+                      {number(bar.expected, 0)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {number(bar.excess, 0)}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-right tabular-nums ${
+                        bar.z !== null && bar.z >= 3
+                          ? "font-semibold text-ink"
+                          : "text-muted"
+                      }`}
+                    >
+                      {bar.z === null ? "—" : number(bar.z)}
+                    </td>
+                  </>
+                ) : (
+                  <td colSpan={4} className="px-4 py-3 text-muted">
+                    Not used{bar.reason ? `: ${bar.reason}` : ""}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <p className="mt-6 max-w-3xl text-xs leading-5 text-muted">
-        One histogram per scintillator for the whole period, from the pairs of D
-        and U readings with the same time. A source is reported when Δ, the
-        likelihood gain of the best source over cosmic muons alone, is above{" "}
-        {data.threshold}. Δ and the source share are scores, not probabilities,
-        and at most one source is assumed per scintillator. Readings are used as
-        stored, without calibration, and weak sources need many pairs.
+        {unusable.length > 0
+          ? `Scintillators ${unusable.map((bar) => bar.scintillator).join(", ")} are left out: their PMTs are noisy or dead. `
+          : ""}
+        The method needs a reference period recorded with the same trigger
+        settings; when the trigger rate differs a warning is shown. Weak sources
+        (Co-60, Na-22 at their present activity) cannot be seen, and the
+        simulation behind the position model is approximate. The scores are not
+        probabilities.
       </p>
     </>
   );

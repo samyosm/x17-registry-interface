@@ -15,7 +15,11 @@ import {
 export const metadata: Metadata = { title: "Source identification" };
 
 async function LoadedIdentification({ query }: { query: IdentificationQuery }) {
-  const outcome = await getIdentification(query.range.from, query.range.to);
+  const outcome = await getIdentification(
+    query.range.from,
+    query.range.to,
+    query.reference,
+  );
   if (outcome.status !== "ok") {
     return (
       <div className="mt-10">
@@ -30,7 +34,7 @@ async function LoadedIdentification({ query }: { query: IdentificationQuery }) {
       </div>
     );
   }
-  return <IdentificationResults data={outcome.data} query={query} />;
+  return <IdentificationResults data={outcome.data} />;
 }
 
 export default async function Page({
@@ -43,6 +47,9 @@ export default async function Page({
     query.range.mode,
     query.range.mode === "custom"
       ? `${query.range.fromInput}/${query.range.toInput}`
+      : "",
+    query.reference
+      ? `${query.reference.fromInput}/${query.reference.toInput}`
       : "",
   ].join("|");
   return (

@@ -28,6 +28,8 @@ async function problem(response: Response): Promise<IdentificationProblem> {
       body.error?.code === "identifier_unavailable"
     )
       return { status: "unavailable", message: body.error.message ?? "" };
+    if (response.status === 422 && body.error?.code === "insufficient_data")
+      return { status: "failed", message: body.error.message ?? "" };
     if (typeof body.detail === "string") detail = body.detail;
     else if (body.error?.message) detail = body.error.message;
   } catch {}
@@ -37,11 +39,15 @@ async function problem(response: Response): Promise<IdentificationProblem> {
 }
 
 const IDENTIFICATION_FIELDS = [
-  "readings",
-  "threshold",
-  "minPairs",
-  "filter",
-  "scintillators",
+  "reference",
+  "events",
+  "settings",
+  "bars",
+  "detection",
+  "sources",
+  "verdict",
+  "spectrum",
+  "warnings",
 ];
 
 /** A whole period is analysed in the database, which can take a while; below Node's 300 s limit. */
@@ -114,8 +120,13 @@ async function fetchJson<T>(
 export async function getIdentification(
   from: string,
   to: string,
+  reference: { from: string; to: string } | null,
 ): Promise<IdentificationOutcome> {
   const params = new URLSearchParams({ from, to });
+  if (reference) {
+    params.set("refFrom", reference.from);
+    params.set("refTo", reference.to);
+  }
   const result = await fetchJson<Identification>(
     `identification?${params.toString()}`,
     IDENTIFICATION_FIELDS,
