@@ -47,6 +47,7 @@ const IDENTIFICATION_FIELDS = [
   "sources",
   "verdict",
   "spectrum",
+  "trigger",
   "warnings",
 ];
 

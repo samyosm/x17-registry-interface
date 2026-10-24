@@ -45,6 +45,12 @@ export function SiteHeader() {
           >
             Diagnostics
           </Link>
+          <Link
+            href="/settings"
+            className="py-5 text-sm font-medium text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Settings
+          </Link>
         </nav>
       </div>
     </header>

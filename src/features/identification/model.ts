@@ -74,7 +74,27 @@ export interface Identification {
     window: number[];
     expected: number[];
   };
+  trigger: TriggerComparison;
   warnings: string[];
+}
+
+export interface TriggerSetup {
+  /** When the configuration was saved in TriggerApp. */
+  since: string;
+  title: string | null;
+  mode: string | null;
+  majority: number | null;
+  /** The distinct thresholds of the channels. */
+  thresholds: number[];
+}
+
+export interface TriggerComparison {
+  /** False when the trigger history does not cover the window or the reference. */
+  known: boolean;
+  same: boolean | null;
+  differences: string[];
+  window: TriggerSetup | null;
+  reference: TriggerSetup | null;
 }
 
 export type IdentificationProblem =

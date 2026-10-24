@@ -40,6 +40,24 @@ export async function registryGet(
   });
 }
 
+export async function registryPut(
+  path: string,
+  body: unknown,
+  options?: { timeoutMs?: number },
+): Promise<Response> {
+  const { url, token } = registryConfig();
+  return fetch(`${url}/${path}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+    signal: AbortSignal.timeout(options?.timeoutMs ?? 20_000),
+  });
+}
+
 export const runRepository: RunRepository = {
   async search(query) {
     const params = new URLSearchParams({

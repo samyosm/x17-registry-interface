@@ -1,7 +1,7 @@
 import { formatUtc } from "@/features/runs/format";
 import { ExcessChart } from "../components/excess-chart";
 import { IdentificationForm } from "../components/identification-form";
-import type { Identification } from "../model";
+import type { Identification, TriggerSetup } from "../model";
 import type { IdentificationQuery } from "../query";
 
 /** Title and period controls; the data-dependent part is passed as children. */
@@ -64,6 +64,14 @@ function sentence(data: Identification): { title: string; detail: string } {
   };
 }
 
+function triggerText(setup: TriggerSetup): string {
+  const thresholds =
+    setup.thresholds.length === 0
+      ? ""
+      : `, threshold ${setup.thresholds.join("/")}`;
+  return `mode ${setup.mode ?? "unknown"}, majority ${setup.majority ?? "unknown"}${thresholds}`;
+}
+
 const number = (value: number, digits = 1) =>
   value.toLocaleString(undefined, {
     maximumFractionDigits: digits,
@@ -94,6 +102,23 @@ export function IdentificationResults({ data }: { data: Identification }) {
           least {data.settings.threshold} ADC; the stored data is not changed.
         </p>
       </div>
+
+      <p className="mt-2 text-sm text-muted">
+        Trigger:{" "}
+        {data.trigger.known && data.trigger.window ? (
+          <>
+            {triggerText(data.trigger.window)} in the window
+            {data.trigger.same === false && data.trigger.reference
+              ? `, ${triggerText(data.trigger.reference)} in the reference`
+              : data.trigger.same
+                ? ", the same in the reference"
+                : ""}
+            . From the saved TriggerApp history; the hardware is not read back.
+          </>
+        ) : (
+          "not known: the trigger history does not cover this period."
+        )}
+      </p>
 
       {data.warnings.length > 0 && (
         <ul className="mt-6 space-y-2 border-l-4 border-[#f1c21b] bg-surface px-4 py-3 text-sm text-ink">
